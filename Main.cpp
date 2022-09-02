@@ -81,6 +81,7 @@ int main() {
 	sf::Image image_to_draw;
 	if (!image_to_draw.loadFromFile(image_path)) {
 		cout << "ERROR: couldnt open image" << endl;
+		return -1;
 	}
 	img_w = image_to_draw.getSize().x;
 	img_h = image_to_draw.getSize().y;
