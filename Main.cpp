@@ -7,6 +7,7 @@
 using namespace std;
 
 //NOTE: only works for linear waterfall (not logarithmic)
+//NOTE: runs faster on larger images
 
 // ===== CONFIGURABLE VARIABLES =====
 uint64_t additional_time = 10000;  //additional empty space at beginning and at end (44100 = 1 second)
@@ -16,6 +17,7 @@ float screen_h = 1075;             //height of waterfall
 float max_time = 22;               //seconds of waterfall-length
 float min_freq = 500;              //start frequency
 int max_freq = 7500;               //end frequency
+std::string audio_type = ".wav";   // .wav / .ogg / .flac
 // ==================================
 
 short* sample;
@@ -70,6 +72,7 @@ void normalize(short* samples, size_t size) {
 
 int main() {
 	cout << "NOTE: only works for linear waterfall (not logarithmic)" << endl;
+	cout << "NOTE: runs faster on larger images\n" << endl;
 	cout << "image path: ";
 
 	std::string image_path;
@@ -81,10 +84,10 @@ int main() {
 	}
 	img_w = image_to_draw.getSize().x;
 	img_h = image_to_draw.getSize().y;
-
 	nr_threads = nr_threads > img_h ? img_h : nr_threads;
-
 	amp_list = new float[d_freq * img_h];
+
+	//==========================
 
 	cout << "calculating frequencies..." << endl;
 
@@ -94,13 +97,13 @@ int main() {
 			amp_list[(img_h - 1 - y) * d_freq + x] = float(image_to_draw.getPixel(int(float(img_w) * float(x) / d_freq), y).r) / 255;
 		}
 	}
-
 	float secs = max_time * ((float(d_freq) / 8000) * screen_w / screen_h) / (float(img_w) / img_h);
 	float sec_pro_line = secs / img_h;
 	dt_line = sec_pro_line * 44100;
-
 	uint64_t sample_count = dt_line * img_h;
 	sample = new short[sample_count + 2 * additional_time];
+
+	//==========================
 
 	cout << "writing to buffer..." << endl;
 
@@ -113,9 +116,12 @@ int main() {
 	std::vector<thread> th_vec;
 	for (int i = 0; i < nr_threads; i++) {
 		int start = i * int(img_h / nr_threads);
-		int length = int(img_h / nr_threads) + 1;
+		int length;
+		float temp = float(img_h) / nr_threads;
+		length = int(temp) + (temp - int(temp) > 0 ? 1 : 0);
 		th_vec.push_back(thread(th_run, i, start, length));
 	}
+	//wait for all threads to finish
 	for (int i = 0; i < nr_threads; i++) {
 		th_vec[i].join();
 	}
@@ -125,16 +131,18 @@ int main() {
 		sample[i] = 0;
 	}
 
+	//==========================
+
 	cout << "normalize samples..." << endl;
 	normalize(sample, 2 * additional_time + sample_count);
 
-	//========================
+	//==========================
 
 	sf::Sound sound;
 	sf::SoundBuffer buffer;
 	buffer.loadFromSamples(sample, sample_count + 2 * additional_time, 1, 44100);
 	sound.setBuffer(buffer);
-	buffer.saveToFile("out_sound.wav");
+	buffer.saveToFile("out_sound" + audio_type);
 
 	delete[] sample;
 	delete[] amp_list;
