@@ -7,7 +7,6 @@
 using namespace std;
 
 //NOTE: only works for linear waterfall (not logarithmic)
-//NOTE: runs faster on larger images
 
 // ===== CONFIGURABLE VARIABLES =====
 uint64_t additional_time = 10000;  //additional empty space at beginning and at end (44100 = 1 second)
