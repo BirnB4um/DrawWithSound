@@ -71,7 +71,6 @@ void normalize(short* samples, size_t size) {
 
 int main() {
 	cout << "NOTE: only works for linear waterfall (not logarithmic)" << endl;
-	cout << "NOTE: runs faster on larger images\n" << endl;
 	cout << "image path: ";
 
 	std::string image_path;
